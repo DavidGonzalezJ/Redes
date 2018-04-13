@@ -1,0 +1,13 @@
+#include <stdio.h>
+#include <time.h>
+
+int main() {
+
+ time_t seconds;
+    seconds = time (NULL);
+ 
+    	printf ("Numero de horas desde el 1 de Enero de 1970 es %ld \n", seconds);
+	printf ("La hora (GMT 0)es: %ld:%ld:%ld \n", (seconds/3600)%24,(seconds/60)%60, seconds%60);
+	printf(ctime(&seconds));
+    return 1;
+}
