@@ -35,13 +35,13 @@ int main(int argc, char** argv) {
 	  getnameinfo((struct sockaddr *) &cliente, cliente_len, host, 
 	      NI_MAXHOST, serv, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV);
 	  std::cout << "Conexión desde Host: "<<host << "Puerto: "<< serv << "\n";
-
-	  //Ejemplo: recepción en buffer de aplicación (no leer de byte en byte)
+	  size_t c;
 	  do {
-		size_t c = recv(cliente_sd, &(buffer[i]), 1, 0);
-	  } while ( c >= 0 && i < 79 && buffer[i++] != '\n');
-	  
-	  send(cliente_sd, buffer, i, 0);
+		c = recv(cliente_sd, buffer, 255, 0);
+		send(cliente_sd, buffer, c, 0);
+	  } while ( c > 0);
+ 	  
+	  if(c ==0) std::cout << "Conexión terminada \n";
 	}
 
 	freeaddrinfo(result);
