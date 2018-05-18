@@ -18,17 +18,17 @@ public:
     void do_message() {
         while(!exit) {
             char buf[256];
-
             //Receive
-            ssize_t bytesRec =  recv(socket, &buf, 255, 0);
+            ssize_t bytesRec =  recv(sd, &buf, 255, 0);
             if(bytesRec == 0) {
-                connected = false;
+                exit = true;
+                std::cout << "Conexión terminada";
             }
             else {
-                send(socket, &buf, bytesRec, 0);
-            }
-
-            std::cout << pthread_self() << std::endl;
+                send(sd, &buf, bytesRec, 0);
+				std::cout << pthread_self() << std::endl;
+			}
+            
         }
     }
 private:
@@ -39,7 +39,6 @@ extern "C" void *start_routine (void * _st) {
     ServerThread * st = static_cast<ServerThread*>(_st);
     st->do_message	();
     delete st;
-
     return 0;
 
 }
@@ -72,14 +71,12 @@ int main (int argc, char **argv)
     freeaddrinfo(res);
 
     while(true) {
-        int socketThread = accept(sd,(struct sockaddr *) &cliente, &cliente_len)
-
-
-                           //Inizializar pool de threads
-                           pthread_t tid;
+        int socketThread = accept(sd,(struct sockaddr *) &cliente, &cliente_len);
+		//Inizializar pool de threads
+        pthread_t tid;
         pthread_attr_t attr;
 
-        ServerThread* st = new ServerThread(sd);
+        ServerThread* st = new ServerThread(socketThread);
 
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -87,7 +84,6 @@ int main (int argc, char **argv)
         pthread_create(&tid, &attr, start_routine, static_cast<void*>(st));
 
     }
-
 
     // Thread Ppal
     char c;
