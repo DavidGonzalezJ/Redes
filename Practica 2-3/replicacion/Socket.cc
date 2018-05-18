@@ -11,6 +11,10 @@
 
 bool operator== (const Socket &s1, const Socket &s2)
 {
+	struct sockaddr_in *s1_in = (struct sockaddr_in*)s1.sa;
+	struct sockaddr_in *s2_in = (struct sockaddr_in*)s2.sa;
+	
+	return s1_in.sin_family == s2_in.sin_family && s1_in.sin_addr.s_addr == s2_in.sin_addr.s_addr && s1_in.sin_port == s2_in.sin_port;
 }
 
 std::ostream& operator<<(std::ostream& os, const Socket& s)

@@ -34,11 +34,11 @@ public:
         memcpy(tmp, (void *)name,80 * sizeof(char));
         tmp += 80 * sizeof(char);
         //X
-        memcpy(tmp, &_x, sizeof(int16_t));
+        memcpy(tmp, &x, sizeof(int16_t));
         tmp += sizeof(int16_t);
         
         //Y
-        memcpy(tmp, &_y, sizeof(int16_t));
+        memcpy(tmp, &y, sizeof(int16_t));
     }
 
     int from_bin(char * data)
@@ -48,11 +48,11 @@ public:
         memcpy(name, tmp, 80);
         tmp += 80 * sizeof(char);
         //X
-        memcpy(&_x,tmp, sizeof(int16_t));
+        memcpy(&x,tmp, sizeof(int16_t));
         tmp += sizeof(int16_t);
         
         //Y
-        memcpy( &_y,tmp,sizeof(int16_t));
+        memcpy( &y,tmp,sizeof(int16_t));
         
     }
 
@@ -67,11 +67,27 @@ int main(int argc, char **argv)
 {
     Jugador one("player one", 134, 23);
     Jugador one_("-", 0 ,0);
-    
     one.to_bin();
-    std::cout << "---------\n" << one.data() << << "---------\n";
-    one_.from_bin(one.data());
-    std::cout << "N:" << one_.name << "\n X: "<<one_._x<< " Y: "<< one_._y << "\n";
 
+    char * aux= (char *) malloc(one.size() + sizeof(int32_t));;
     
+    //Abrir archivo texto
+    int filedesc = open("Jugador.txt", O_RDWR | O_CREAT | O_TRUNC);
+    if(filedesc < 0)
+        return 1;
+ 
+    if(write(filedesc, one.data(), one.size()) != one.size())
+    {
+        write(2,"There was an error writing to testfile.txt\n", 32);    // strictly not an error, it is allowable for fewer characters than requested to be written.
+        return 1;
+    }
+    if(lseek(filedesc,0,SEEK_SET) < 0) return 1;
+    if(read(filedesc, aux,one.size()) < 0)
+		write(2, "An error occurred in the read.\n", 31);
+    close(filedesc);
+        
+    //std::cout << "---------\n" << one.data() << "---------\n";
+    one_.from_bin(aux);
+    std::cout << "N: " << one_.name << "\nX: "<<one_.x<< " Y: "<< one_.y << "\n";
+
 }
