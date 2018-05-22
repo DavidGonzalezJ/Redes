@@ -29,9 +29,38 @@ std::ostream& operator<<(std::ostream& os, const Socket& s)
 }
 
 // ----------------------------------------------------------------------------
-
+    /**
+     *  Construye el socket UDP con la dirección y puerto dados. Esta función
+     *  usara getaddrinfo para obtener la representación binaria de dirección y
+     *  puerto.
+     *
+     *  Además abrirá el canal de comunicación con la llamada socket(2).
+     *
+     *    @param address cadena que representa la dirección o nombre
+     *    @param port cadena que representa el puerto o nombre del servicio
+     *
+     *  En caso de error lanzar una excepcion std::runtime_error
+     */
 Socket::Socket(const char * address, const char * port):sd(-1)
 {
+    struct addrinfo *result;
+    struct addrinfo hints;
+    memset((void *) &hints, '\0', sizeof(struct addrinfo));
+
+    //UDP
+    hints.ai_flags    = AI_PASSIVE; //Devolver 0.0.0.0
+    hints.ai_family   = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_DGRAM;
+
+    int rc = getaddrinfo(address, port, &hints, &result);
+    if(rc!=0) {
+        std::cout << "Error getaddrinfo():" << gai_strerror(rc) << std::endl;
+        //ERROR
+    }
+
+    sd = socket(result->ai_family, result->ai_socktype, 0);
+    if(sd == -1) //ERROR
+
 }
 
 // ----------------------------------------------------------------------------
