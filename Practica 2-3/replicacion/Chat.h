@@ -4,6 +4,7 @@
 #include "Serializable.h"
 #include "Socket.h"
 #include "UDPServer.h"
+//make all
 
 class ChatMessage: public Serializable
 {
@@ -12,14 +13,40 @@ public:
 
     ChatMessage(const char * n, const std::string m)
     {
+		strncpy(nick, n, 8);
+		strncpy(message, m, 80);
+
     };
 
     void to_bin()
     {
+		 //80 del nombre + 8 del nick
+        int32_t total = 88 * sizeof(char);
+        //Hace el malloc
+        alloc_data(total);
+        
+        //Nos interesa saber donde empiezan las variables dentro del buffer
+        char * tmp = _data + sizeof(int32_t); //Tmp apunta al nombre
+        
+        //Nombre
+        memcpy(tmp, (void *)message,80 * sizeof(char));
+        tmp += 8 * sizeof(char);
+        //Mensaje
+        memcpy(tmp, (void *)message,80 * sizeof(char));
+        tmp += 80 * sizeof(char);
+        
     }
 
     virtual int from_bin(char * bobj)
     {
+		 char * tmp = bobj + sizeof(int32_t);
+        //Nombre
+        memcpy(message, tmp, 80);
+        tmp += 8 * sizeof(char);
+        
+        memcpy(nick, tmp, 80);
+        tmp += 80 * sizeof(char)
+
     }
 
     char message[80];
