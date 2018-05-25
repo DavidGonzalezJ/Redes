@@ -29,18 +29,7 @@ std::ostream& operator<<(std::ostream& os, const Socket& s)
 }
 
 // ----------------------------------------------------------------------------
-    /**
-     *  Construye el socket UDP con la dirección y puerto dados. Esta función
-     *  usara getaddrinfo para obtener la representación binaria de dirección y
-     *  puerto.
-     *
-     *  Además abrirá el canal de comunicación con la llamada socket(2).
-     *
-     *    @param address cadena que representa la dirección o nombre
-     *    @param port cadena que representa el puerto o nombre del servicio
-     *
-     *  En caso de error lanzar una excepcion std::runtime_error
-     */
+
 Socket::Socket(const char * address, const char * port):sd(-1)
 {
     struct addrinfo *result;
@@ -55,11 +44,13 @@ Socket::Socket(const char * address, const char * port):sd(-1)
     int rc = getaddrinfo(address, port, &hints, &result);
     if(rc!=0) {
         std::cout << "Error getaddrinfo():" << gai_strerror(rc) << std::endl;
+	throw new std::runtime_error("Error socket");
         //ERROR
     }
-
+    sa = result->ai_family; sa_len = result->ai_addrlen;
     sd = socket(result->ai_family, result->ai_socktype, 0);
     if(sd == -1) //ERROR
+	throw new std::runtime_error("Error socket");
 
 }
 
@@ -74,14 +65,61 @@ int Socket::bind()
 
 int Socket::send(Serializable * obj, Socket * sock)
 {
+	obj->to_bin();
+	size_t bytesSent = sendto(sock->sd, obj->data(), obj->size(), 0, &sock->sa, sock->sa_len);
+	if(bytesSent == -1) return -1;
+	return 0;
+	
 }
 
 // ----------------------------------------------------------------------------
 
-int Socket::recv(char * buffer, Socket ** sock)
+int Socket::recv(char * obj, Socket ** sock)
 {
+	struct sockaddr cliente;
+	socklen_t cliente_len = sizeof(cliente);
+	
+	size_t bytes = recvfrom(sd, &obj, MAX_MESSAGE_SIZE, 0, &cliente, &cliente_len);
+	
+	if(bytes == -1) return -1;
+	if(sock != 0 ){
+		sock = new Socket(&cliente, &cliente_len);
+	}
+	return 0;
+
 }
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

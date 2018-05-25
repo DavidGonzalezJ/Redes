@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <iostream>
-
+ 
 #define NUM_THREADS 5
 //g++ -o ejc fichero.cc  -lpthread
 //ejc localhost 8080
@@ -13,7 +13,7 @@
 //nc -u localhost 8080 	conectarnos al host con udp
 class ServerThread {
 public:
-    ServerThread(int s):sd(s) {};
+    ServerThread(int s):sd(s), exit(false) {};
     virtual ~ServerThread() {};
     void do_message() {
         while(!exit) {
@@ -46,8 +46,7 @@ int main (int argc, char **argv)
 {
     struct addrinfo hints;
     struct addrinfo* res;
-    struct sockaddr cliente;
-    socklen_t cliente_len = sizeof(cliente);
+
     //Inicializar socket
     memset((void*) &hints, '\0', sizeof(struct addrinfo));
     hints.ai_family = AF_INET;
@@ -64,25 +63,29 @@ int main (int argc, char **argv)
 
     int sd = socket (res->ai_family, res->ai_socktype,0);
 
-    bind ( sd, res->ai_addr, res->ai_addrlen);
+    int error = bind ( sd, res->ai_addr, res->ai_addrlen);
+    if(error) std::cout << "Error bind";
 
-    listen(sd,15);
+    error = listen(sd,15);
+    if(error) std::cout << "Error listen";
 
     freeaddrinfo(res);
 
     while(true) {
+		struct sockaddr cliente;
+		socklen_t cliente_len = sizeof(cliente);
         int socketThread = accept(sd,(struct sockaddr *) &cliente, &cliente_len);
+		
 		//Inizializar pool de threads
         pthread_t tid;
         pthread_attr_t attr;
 
-        ServerThread* st = new ServerThread(socketThread);
-
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	    ServerThread* st = new ServerThread(socketThread);
 
-        pthread_create(&tid, &attr, start_routine, static_cast<void*>(st));
-
+        int error = pthread_create(&tid, &attr, start_routine, static_cast<void*>(st));
+		if(error) std::cout << "Error thread";
     }
 
     // Thread Ppal
