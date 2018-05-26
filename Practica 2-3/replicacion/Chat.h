@@ -14,7 +14,7 @@ public:
     ChatMessage(const char * n, const std::string m)
     {
 		strncpy(nick, n, 8);
-		strncpy(message, m, 80);
+		std::size_t length = m.copy(message,80);
 
     };
 
@@ -45,7 +45,7 @@ public:
         tmp += 8 * sizeof(char);
         
         memcpy(nick, tmp, 80);
-        tmp += 80 * sizeof(char)
+        tmp += 80 * sizeof(char);
 
     }
 
@@ -71,15 +71,32 @@ public:
 class ChatClient
 {
 public:
-    ChatClient(const char * s, const char * p, const char * n):socket(s, p),
-        nick(n){};
+    ChatClient(const char * s, const char * p, const char * n):socket(s, p){
+		strncpy(nick, n, 8);
+	};
 
     void input_thread()
     {
+		char msg[80];
+		ChatMessage * chatMsg;
+		while(true){
+			std::cin>>msg;
+			chatMsg = new ChatMessage (nick, msg);
+			chatMsg->to_bin();
+			socket.send(chatMsg, &socket);			
+		}
     }
 
     void net_thread()
     {
+		char msg[80];
+		ChatMessage * chatMsg;
+		while(true){
+			socket.recv(msg);
+			chatMsg->from_bin(msg);
+			if(chatMsg->nick != nick)
+				std::cout << chatMsg->nick << ": "<< chatMsg->message;
+		}
     }
 
 private:

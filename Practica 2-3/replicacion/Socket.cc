@@ -11,10 +11,19 @@
 
 bool operator== (const Socket &s1, const Socket &s2)
 {
-	struct sockaddr_in *s1_in = (struct sockaddr_in*)s1.sa;
-	struct sockaddr_in *s2_in = (struct sockaddr_in*)s2.sa;
-	
-	return s1_in.sin_family == s2_in.sin_family && s1_in.sin_addr.s_addr == s2_in.sin_addr.s_addr && s1_in.sin_port == s2_in.sin_port;
+	char host1[NI_MAXHOST];
+	char server1[NI_MAXSERV];
+
+	char host2[NI_MAXHOST];
+	char server2[NI_MAXSERV];
+
+	int error = getnameinfo(&s1.sa,s1.sa_len, host1, NI_MAXHOST, server1, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+			
+	error = getnameinfo(&s2.sa,s2.sa_len,host2, NI_MAXHOST, server2, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+
+
+	return s1.sa.sa_family == s2.sa.sa_family && host1 == host2 && server1 == server2;
+
 }
 
 std::ostream& operator<<(std::ostream& os, const Socket& s)
@@ -44,13 +53,13 @@ Socket::Socket(const char * address, const char * port):sd(-1)
     int rc = getaddrinfo(address, port, &hints, &result);
     if(rc!=0) {
         std::cout << "Error getaddrinfo():" << gai_strerror(rc) << std::endl;
-	throw new std::runtime_error("Error socket");
+		throw new std::runtime_error("Error socket");
         //ERROR
     }
-    sa = result->ai_family; sa_len = result->ai_addrlen;
+    sa = *result->ai_addr; sa_len = result->ai_addrlen;
     sd = socket(result->ai_family, result->ai_socktype, 0);
     if(sd == -1) //ERROR
-	throw new std::runtime_error("Error socket");
+		throw new std::runtime_error("Error socket");
 
 }
 
@@ -83,7 +92,7 @@ int Socket::recv(char * obj, Socket ** sock)
 	
 	if(bytes == -1) return -1;
 	if(sock != 0 ){
-		sock = new Socket(&cliente, &cliente_len);
+		*sock = new Socket(&cliente, cliente_len);
 	}
 	return 0;
 

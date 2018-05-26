@@ -32,11 +32,11 @@ int UDPServer::start()
         pthread_t tid;
         pthread_attr_t attr;
 
-        ServerThread* st = new ServerThread(socket);
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-        pthread_create(&tid, &attr, _server_thread, static_cast<void*>(st));
+        int error = pthread_create(&tid, &attr, _server_thread, static_cast<void*>(this));
+        if(error) std::cout << "error creando thread";
     }
     return 0;
 }
@@ -67,12 +67,16 @@ void UDPServer::server_thread()
 void UDPServer::add_connection (Socket * s)
 {
 	pthread_mutex_lock(&mutex);
-	bool encontrado= false;
-	for(int i = 0; i < connections.size() && !encontrado; i++){
-		if(connections[i]== s) encontrado = true;
+	bool encontrado = false;
+	std::vector<Socket*>::iterator it = connections.begin();
+	
+	while (!encontrado && it != connections.end()){
+		if(*it == s) encontrado = true;
+		else it++;
 	}
+	
 	if(!encontrado) connections.push_back(s);
-	else delete s;
+	else connections.erase(it);
 	
 	pthread_mutex_unlock(&mutex);
 }
@@ -83,12 +87,16 @@ void UDPServer::del_connection (Socket * s)
 {
 	pthread_mutex_lock(&mutex);
 	bool encontrado= false;
-	for(int i = 0; i < connections.size() && !encontrado; i++){
-		if(connections[i] == s) {
-			connections.erase (connections.begin()+i);
+		std::vector<Socket*>::iterator it = connections.begin();
+	
+	while (!encontrado && it != connections.end()){
+		if(*it == s) {
+			connections.erase (it);
 			encontrado = true;
-		}
-	}	
+		}else it++;
+	}
+	if(!encontrado) delete s;
+	
 	pthread_mutex_unlock(&mutex);
 }
 
